@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Good Call AI — Iniciar sesión</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📞</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-bg"></div>
+  <div class="login-grid"></div>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">GC</div>
+      <span class="login-logo-text">Good Call AI</span>
+    </div>
+
+    <div class="login-title">Inicia sesión en tu panel de control</div>
+
+    <div class="login-error" id="loginError"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="login-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="tu@empresa.com" required autocomplete="email" autofocus>
+      </div>
+
+      <div class="login-field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="login-btn" id="loginBtn">
+        Iniciar sesión
+      </button>
+    </form>
+
+    <div class="login-footer">
+      Good Call AI © 2026 — Panel de gestión de bots
+    </div>
+  </div>
+</div>
+
+<!-- Auth module -->
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+  // Si ya está logueado, redirigir al dashboard
+  if (Auth.redirectIfLoggedIn()) {
+    // redirect happens inside
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('loginBtn');
+    const errorEl = document.getElementById('loginError');
+
+    // Reset error
+    errorEl.classList.remove('show');
+    errorEl.textContent = '';
+
+    // Disable button
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+
+    try {
+      const user = await Auth.login(email, password);
+      // Success → redirect
+      btn.textContent = '✓ Redirigiendo...';
+      setTimeout(() => {
+        window.location.href = '/app.html';
+      }, 300);
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Iniciar sesión';
+
+      // Shake the password field
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    }
+  }
+</script>
+
+</body>
+</html>
