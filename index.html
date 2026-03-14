@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GC — Panel de Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f6f7f9;
+  --surface:   #ffffff;
+  --surface2:  #f0f1f4;
+  --border:    #e3e5ea;
+  --border2:   #d0d3db;
+  --text:      #111827;
+  --text2:     #6b7280;
+  --text3:     #9ca3af;
+  --blue:      #5b8ff9;
+  --violet:    #a855f7;
+  --grad:      linear-gradient(135deg, #68b4ff 0%, #a855f7 100%);
+  --green:     #10b981;
+  --red:       #ef4444;
+  --amber:     #f59e0b;
+  --r:         10px;
+  --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 54px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 0;
+  z-index: 200;
+  box-shadow: var(--shadow);
+}
+
+.top-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 36px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.logo-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex: 1;
+}
+
+.top-nav-item {
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.12s;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.top-nav-item:hover { background: var(--surface2); color: var(--text); }
+.top-nav-item.active { background: var(--surface2); color: var(--text); font-weight: 600; }
+
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--grad);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(91,143,249,0.3);
+}
+
+.btn-primary:hover { opacity: 0.88; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+.divider-v {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 30px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.12s;
+}
+
+.user-chip:hover { background: var(--surface2); }
+
+.user-av {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.user-chip-name { font-size: 13px; font-weight: 500; }
+
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+  transition: all 0.12s;
+}
+
+.logout:hover { background: #fff5f5; color: var(--red); border-color: #fca5a5; }
+
+/* ─── LAYOUT ─── */
+.layout {
+  display: flex;
+  margin-top: 54px;
+  min-height: calc(100vh - 54px);
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: 206px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 18px 10px;
+  position: fixed;
+  top: 54px; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sg { margin-bottom: 20px; }
+
+.sg-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 0 10px;
+  margin-bottom: 4px;
+}
+
+.si {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.12s;
+  margin-bottom: 1px;
+  user-select: none;
+}
+
+.si:hover { background: var(--surface2); color: var(--text); }
+
+.si.active {
+  background: linear-gradient(135deg, rgba(91,143,249,0.1), rgba(168,85,247,0.07));
+  color: var(--blue);
+  font-weight: 500;
+}
+
+.si svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.55; }
+.si.active svg { opacity: 1; }
+
+.si-badge {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--surface2);
+  color: var(--text3);
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+
+/* ─── MAIN ─── */
+.main {
+  margin-left: 206px;
+  flex: 1;
+  padding: 30px 34px;
+  max-width: calc(100vw - 206px);
+}
+
+/* PAGE HEADER */
+.ph { margin-bottom: 26px; }
+.ph-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.ph-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+/* STATS */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.stat-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+
+.stat-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-value.empty { color: var(--text3); font-weight: 400; font-size: 22px; }
+.stat-note { font-size: 11.5px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+/* GRID */
+.g2   { display: grid; grid-template-columns: 1fr 310px; gap: 14px; margin-bottom: 14px; }
+.g2eq { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* CARD */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.ch {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ch-title { font-size: 13.5px; font-weight: 600; }
+.ch-link  { font-size: 12px; color: var(--blue); cursor: pointer; font-weight: 500; }
+.ch-link:hover { text-decoration: underline; }
+
+/* CHART */
+.chart-period { display: flex; gap: 4px; }
+
+.period-btn {
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  transition: all 0.12s;
+}
+
+.period-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(91,143,249,0.06); }
+
+.chart-empty {
+  margin: 18px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--text3);
+  font-size: 13px;
+  border: 1.5px dashed var(--border2);
+  border-radius: 8px;
+}
+
+/* BOTS */
+.bot-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.bot-row:hover { background: var(--bg); }
+
+.bot-av {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+
+.bot-info { flex: 1; min-width: 0; }
+.bot-name { font-size: 13.5px; font-weight: 500; margin-bottom: 1px; }
+.bot-num  { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+.pill {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.pill.on  { background: #d1fae5; color: #065f46; }
+.pill.pau { background: #fef3c7; color: #92400e; }
+.pill.off { background: #fee2e2; color: #991b1b; }
+
+.add-bot-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 10px;
+  padding: 9px;
+  border: 1.5px dashed var(--border2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.add-bot-row:hover { border-color: var(--blue); color: var(--blue); background: rgba(91,143,249,0.04); }
+
+/* EMPTY STATE */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  gap: 6px;
+  color: var(--text3);
+  text-align: center;
+}
+
+.empty-ico {
+  width: 38px; height: 38px;
+  background: var(--surface2);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6px;
+}
+
+.empty-t { font-size: 13.5px; font-weight: 500; color: var(--text2); }
+.empty-s { font-size: 12.5px; }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; }
+
+thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+tbody td {
+  padding: 12px 18px;
+  font-size: 13px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg); }
+.td-m { color: var(--text); font-weight: 500; }
+
+/* CONFIG */
+.cr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cr:last-child { border-bottom: none; }
+.cr-label { font-size: 13.5px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.cr-sub   { font-size: 11.5px; color: var(--text2); }
+
+.toggle {
+  width: 36px; height: 20px;
+  border-radius: 20px;
+  background: var(--border2);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.18s;
+  flex-shrink: 0;
+}
+
+.toggle.on { background: var(--blue); }
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: left 0.18s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle.on::after { left: 19px; }
+
+.cfg-sel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 5px 9px;
+  border-radius: 7px;
+  cursor: pointer;
+  outline: none;
+}
+
+.cfg-sel:focus { border-color: var(--blue); }
+
+/* PROMPT */
+.pw { padding: 13px 18px; }
+.pw-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 7px;
+}
+
+textarea.prompt {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  border-radius: 8px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+textarea.prompt:focus { border-color: var(--blue); background: #fff; }
+
+/* PLAN BANNER */
+.plan-banner {
+  margin: 12px 18px 16px;
+  background: linear-gradient(135deg, rgba(91,143,249,0.06), rgba(168,85,247,0.06));
+  border: 1px solid rgba(91,143,249,0.18);
+  border-radius: 9px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pb-label { font-size: 10px; color: var(--text2); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; letter-spacing: 0.5px; }
+.pb-val   { font-size: 17px; font-weight: 700; color: var(--text); }
+.pb-date  { font-size: 12px; color: var(--text2); font-weight: 400; margin-left: 5px; }
+
+.pb-manage {
+  padding: 7px 13px;
+  border-radius: 7px;
+  border: 1px solid rgba(91,143,249,0.25);
+  background: rgba(91,143,249,0.07);
+  color: var(--blue);
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.pb-manage:hover { background: rgba(91,143,249,0.14); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ANIM */
+@keyframes fu { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{opacity:0;transform:translateY(16px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+.main > * { animation: fu 0.22s ease both; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(3px);
+  z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease both;
+}
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.16), 0 4px 16px rgba(0,0,0,0.07);
+  width: 560px; max-width: calc(100vw - 40px); max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.18s ease both;
+}
+.modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 18px 22px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+  border-radius: 14px 14px 0 0;
+}
+.modal-title { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+.modal-sub   { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 7px; border: none;
+  background: var(--surface2); color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; line-height: 1; transition: all 0.12s; flex-shrink: 0;
+}
+.modal-close:hover { background: var(--border); color: var(--text); }
+.modal-body { padding: 20px 22px; }
+
+/* ─── FULL PAGE ─── */
+.fullpage-overlay {
+  position: fixed; inset: 0; top: 54px;
+  background: var(--bg); z-index: 300;
+  overflow-y: auto; animation: fu 0.2s ease both;
+}
+.fullpage-inner { margin-left: 206px; padding: 30px 34px; }
+.fullpage-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text2); cursor: pointer;
+  margin-bottom: 20px; padding: 6px 10px; border-radius: 7px;
+  transition: all 0.12s; border: 1px solid transparent;
+}
+.fullpage-back:hover { background: var(--surface); border-color: var(--border); color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="top-logo">
+    <div class="logo-mark">GC</div>
+    <span class="logo-label">GC Bots</span>
+  </div>
+
+  <nav class="top-nav">
+    <div class="top-nav-item active" onclick="setTopActive(this)">Dashboard</div>
+    <div class="top-nav-item" onclick="setTopActive(this)">Bots</div>
+    <div class="top-nav-item" onclick="setTopActive(this)">Conversaciones</div>
+    <div class="top-nav-item" onclick="setTopActive(this)">Flujos</div>
+    <div class="top-nav-item" onclick="setTopActive(this)">Archivos</div>
+    <div class="top-nav-item" onclick="setTopActive(this)">Analíticas</div>
+    <div class="top-nav-item" onclick="setTopActive(this)">Pagos</div>
+  </nav>
+
+  <div class="top-right">
+    <button class="btn btn-primary">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+      Nuevo bot
+    </button>
+    <div class="divider-v"></div>
+    <div class="user-chip">
+      <div class="user-av">JR</div>
+      <span class="user-chip-name">Juan R.</span>
+    </div>
+    <button class="logout">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6"/></svg>
+      Salir
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sg">
+      <div class="sg-label">General</div>
+      <div class="si active" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.2"/></svg>
+        Resumen
+      </div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.2"/></svg>
+        Mis Bots
+        <span class="si-badge">0</span>
+      </div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 2V4a1 1 0 011-1z"/></svg>
+        Conversaciones
+        <span class="si-badge">0</span>
+      </div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,11 4.5,7 7.5,9.5 11.5,4 15,6"/></svg>
+        Analíticas
+      </div>
+    </div>
+
+    <div class="sg">
+      <div class="sg-label">Configuración</div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42"/></svg>
+        Configurar Bot
+      </div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M3 8h6M3 11h4"/><rect x="1.5" y="2" width="13" height="12" rx="1.5"/></svg>
+        Flujos
+      </div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="8" y1="5" x2="8" y2="11"/></svg>
+        Archivos / Media
+      </div>
+    </div>
+
+    <div class="sg">
+      <div class="sg-label">Cuenta</div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="4" width="13" height="9" rx="1.5"/><path d="M1.5 7.5h13M5 4V2.5a2.5 2.5 0 015 0V4"/></svg>
+        Pagos
+      </div>
+      <div class="si" onclick="setSide(this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-3.3 2.2-5 5-5M12 9v4M10 11h4"/></svg>
+        Equipo
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-content">
+    <!-- Views are injected here by JS -->
+  </main>
+</div>
+
+<script>
+// ─── ROUTING ─────────────────────────────────────────────────────────────────
+// sidebar: 'mini' swaps content inside main | 'full' = full-page overlay
+// topnav:  always 'modal'
+
+const SIDEBAR_ROUTES = {
+  'resumen':          'mini',
+  'mis bots':         'mini',
+  'conversaciones':   'mini',
+  'analíticas':       'mini',
+  'configurar bot':   'mini',
+  'flujos':           'mini',
+  'archivos / media': 'full',
+  'pagos':            'full',
+  'equipo':           'full',
+};
+
+// ─── MINI-PAGE CONTENT ───────────────────────────────────────────────────────
+const MINI_PAGES = {
+
+  resumen: {
+    title: 'Resumen general',
+    sub: 'Bienvenido, Juan. Monitorea tus bots y actividad desde aquí.',
+    render: () => `
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Mensajes hoy</div><div class="stat-icon" style="background:#eff6ff"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#5b8ff9" stroke-width="1.6"><path d="M2 3h12a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 2V4a1 1 0 011-1z"/></svg></div></div>
+          <div class="stat-value empty">—</div><div class="stat-note">Sin actividad aún</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Conversaciones activas</div><div class="stat-icon" style="background:#faf5ff"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#a855f7" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.2"/></svg></div></div>
+          <div class="stat-value empty">0</div><div class="stat-note">Ningún bot activo</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Tasa de respuesta</div><div class="stat-icon" style="background:#ecfdf5"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#10b981" stroke-width="1.6"><polyline points="1,11 4.5,7 7.5,9.5 11.5,4 15,6"/></svg></div></div>
+          <div class="stat-value empty">—</div><div class="stat-note">Disponible con datos</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Escalados a agente</div><div class="stat-icon" style="background:#fef2f2"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#ef4444" stroke-width="1.6"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-3.3 2.2-5 5-5M12 9v4M10 11h4"/></svg></div></div>
+          <div class="stat-value empty">0</div><div class="stat-note">Sin escalados</div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="ch">
+            <div class="ch-title">Actividad de mensajes</div>
+            <div class="chart-period">
+              <div class="period-btn" onclick="setPeriod(this)">7D</div>
+              <div class="period-btn active" onclick="setPeriod(this)">30D</div>
+              <div class="period-btn" onclick="setPeriod(this)">90D</div>
+            </div>
+          </div>
+          <div class="chart-empty">
+            <svg width="26" height="26" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35"><polyline points="1,13 5,9 8,11 12,5 15,7"/><rect x="1" y="1" width="14" height="14" rx="1.5"/></svg>
+            <span>Sin datos disponibles</span>
+            <span style="font-size:12px">Conecta tu primer bot para ver la actividad</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ch-title">Estado de bots</div><div class="ch-link" onclick="navigate('mis-bots')">Gestionar</div></div>
+          <div class="empty">
+            <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.2"/></svg></div>
+            <div class="empty-t">Sin bots configurados</div>
+            <div class="empty-s">Crea tu primer bot para empezar</div>
+          </div>
+          <div class="add-bot-row" onclick="navigate('mis-bots')">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+            Agregar bot
+          </div>
+        </div>
+      </div>
+      <div class="g2eq">
+        <div class="card">
+          <div class="ch"><div class="ch-title">Pagos recientes</div><div class="ch-link" onclick="navigate('pagos')">Ver historial</div></div>
+          <div class="empty">
+            <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><rect x="1.5" y="4" width="13" height="9" rx="1.5"/><path d="M1.5 7.5h13"/></svg></div>
+            <div class="empty-t">Sin pagos registrados</div>
+            <div class="empty-s">El historial de pagos aparecerá aquí</div>
+          </div>
+          <div class="plan-banner">
+            <div><div class="pb-label">PLAN ACTIVO</div><div><span class="pb-val">Plan Pro</span><span class="pb-date">$49 USD / mes</span></div></div>
+            <button class="pb-manage">Gestionar</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ch-title">Configuración rápida</div><div class="ch-link" onclick="navigate('configurar-bot')">Avanzado</div></div>
+          <div class="cr"><div><div class="cr-label">Respuestas automáticas</div><div class="cr-sub">Operación continua sin intervención</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="cr"><div><div class="cr-label">Alertas de escalados</div><div class="cr-sub">Notificación al agente por email</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="cr" style="border-bottom:none"><div><div class="cr-label">Modo fuera de horario</div><div class="cr-sub">Respuesta automática nocturna</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+    `
+  },
+
+  'mis-bots': {
+    title: 'Mis Bots',
+    sub: 'Administra y monitorea todos tus bots activos.',
+    render: () => `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="alert('Crear nuevo bot')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+          Nuevo bot
+        </button>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">Todos los bots</div><span class="si-badge" style="font-size:11px">0 bots</span></div>
+        <div class="empty" style="padding:56px 20px">
+          <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.2"/></svg></div>
+          <div class="empty-t">No tienes bots creados</div>
+          <div class="empty-s">Crea tu primer bot y comienza a automatizar conversaciones</div>
+          <button class="btn btn-primary" style="margin-top:14px" onclick="alert('Crear bot')">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+            Crear primer bot
+          </button>
+        </div>
+      </div>
+    `
+  },
+
+  conversaciones: {
+    title: 'Conversaciones',
+    sub: 'Historial de todas las conversaciones gestionadas por tus bots.',
+    render: () => `
+      <div class="card">
+        <div class="ch">
+          <div class="ch-title">Conversaciones recientes</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input style="font-family:inherit;font-size:12.5px;padding:5px 10px;border:1px solid var(--border);border-radius:7px;outline:none;background:var(--bg);color:var(--text)" placeholder="Buscar conversación...">
+            <button class="btn btn-ghost">Filtrar</button>
+          </div>
+        </div>
+        <div class="empty" style="padding:56px 20px">
+          <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><path d="M2 3h12a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 2V4a1 1 0 011-1z"/></svg></div>
+          <div class="empty-t">Sin conversaciones aún</div>
+          <div class="empty-s">Las conversaciones de tus bots aparecerán aquí en tiempo real</div>
+        </div>
+      </div>
+    `
+  },
+
+  analiticas: {
+    title: 'Analíticas',
+    sub: 'Métricas de rendimiento y engagement de tus bots.',
+    render: () => `
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Total mensajes</div><div class="stat-icon" style="background:#eff6ff"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#5b8ff9" stroke-width="1.6"><path d="M2 3h12a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 2V4a1 1 0 011-1z"/></svg></div></div>
+          <div class="stat-value empty">—</div><div class="stat-note">Sin datos</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Usuarios únicos</div><div class="stat-icon" style="background:#faf5ff"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#a855f7" stroke-width="1.6"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-3.3 2.2-5 5-5M12 9v4M10 11h4"/></svg></div></div>
+          <div class="stat-value empty">—</div><div class="stat-note">Sin datos</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Resolución automática</div><div class="stat-icon" style="background:#ecfdf5"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#10b981" stroke-width="1.6"><polyline points="1,11 4.5,7 7.5,9.5 11.5,4 15,6"/></svg></div></div>
+          <div class="stat-value empty">—</div><div class="stat-note">Sin datos</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-label">Tiempo de respuesta</div><div class="stat-icon" style="background:#fff7ed"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#f59e0b" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><polyline points="8,4 8,8 11,10"/></svg></div></div>
+          <div class="stat-value empty">—</div><div class="stat-note">Sin datos</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">
+          <div class="ch-title">Actividad por período</div>
+          <div class="chart-period">
+            <div class="period-btn" onclick="setPeriod(this)">7D</div>
+            <div class="period-btn active" onclick="setPeriod(this)">30D</div>
+            <div class="period-btn" onclick="setPeriod(this)">90D</div>
+          </div>
+        </div>
+        <div class="chart-empty" style="height:200px">
+          <svg width="26" height="26" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35"><polyline points="1,13 5,9 8,11 12,5 15,7"/><rect x="1" y="1" width="14" height="14" rx="1.5"/></svg>
+          <span>Sin datos disponibles</span>
+          <span style="font-size:12px">Conecta un bot para comenzar a ver métricas</span>
+        </div>
+      </div>
+    `
+  },
+
+  'configurar-bot': {
+    title: 'Configurar Bot',
+    sub: 'Personaliza el comportamiento y personalidad de tu bot.',
+    render: () => `
+      <div class="g2eq">
+        <div class="card">
+          <div class="ch"><div class="ch-title">Comportamiento</div></div>
+          <div class="cr"><div><div class="cr-label">Respuestas automáticas</div><div class="cr-sub">Operación continua sin intervención</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="cr"><div><div class="cr-label">Alertas de escalados</div><div class="cr-sub">Notificación al agente por email</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="cr"><div><div class="cr-label">Modo fuera de horario</div><div class="cr-sub">Respuesta automática nocturna</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+          <div class="cr"><div><div class="cr-label">Confirmación de lectura</div><div class="cr-sub">Mostrar "visto" al usuario</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="cr" style="border-bottom:none"><div><div class="cr-label">Recolectar datos de contacto</div><div class="cr-sub">Nombre y email del usuario</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ch-title">Motor y lenguaje</div></div>
+          <div class="cr"><div><div class="cr-label">Idioma</div><div class="cr-sub">Idioma de respuestas del bot</div></div><select class="cfg-sel"><option>ES — México</option><option>EN — United States</option><option>PT — Brasil</option></select></div>
+          <div class="cr" style="border-bottom:none"><div><div class="cr-label">Modelo de IA</div><div class="cr-sub">Motor de generación</div></div><select class="cfg-sel"><option>GPT-4o</option><option>Claude 3.5</option><option>Llama 3</option></select></div>
+          <div class="pw">
+            <div class="pw-label">Personalidad del bot</div>
+            <textarea class="prompt" rows="4" placeholder="Describe cómo debe comportarse tu bot. Ej: Eres un asistente de ventas amable para una tienda de ropa..."></textarea>
+          </div>
+          <div class="pw" style="padding-top:0">
+            <div class="pw-label">Mensaje de bienvenida</div>
+            <textarea class="prompt" rows="2" placeholder="Ej: ¡Hola! Soy tu asistente virtual. ¿En qué te puedo ayudar hoy?"></textarea>
+          </div>
+          <div style="padding:0 18px 16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="alert('Configuración guardada')">Guardar cambios</button>
+          </div>
+        </div>
+      </div>
+    `
+  },
+
+  flujos: {
+    title: 'Flujos',
+    sub: 'Diseña flujos de conversación automatizados paso a paso.',
+    render: () => `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="alert('Crear nuevo flujo')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+          Nuevo flujo
+        </button>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">Flujos creados</div></div>
+        <div class="empty" style="padding:56px 20px">
+          <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><path d="M3 5h10M3 8h6M3 11h4"/><rect x="1.5" y="2" width="13" height="12" rx="1.5"/></svg></div>
+          <div class="empty-t">Sin flujos definidos</div>
+          <div class="empty-s">Crea flujos para automatizar respuestas según las intenciones del usuario</div>
+          <button class="btn btn-primary" style="margin-top:14px" onclick="alert('Crear flujo')">Crear primer flujo</button>
+        </div>
+      </div>
+    `
+  }
+
+}; // end MINI_PAGES
+
+// ─── FULL-PAGE CONTENT ───────────────────────────────────────────────────────
+const FULL_PAGES = {
+
+  pagos: {
+    title: 'Pagos',
+    sub: 'Administra tu suscripción y revisa el historial de transacciones.',
+    render: () => `
+      <div class="g2eq">
+        <div class="card">
+          <div class="ch"><div class="ch-title">Plan actual</div></div>
+          <div class="plan-banner" style="margin:16px 18px">
+            <div><div class="pb-label">PLAN ACTIVO</div><div><span class="pb-val">Plan Pro</span><span class="pb-date">$49 USD / mes</span></div></div>
+            <button class="pb-manage">Gestionar</button>
+          </div>
+          <div class="cr"><div><div class="cr-label">Próximo cobro</div><div class="cr-sub">Renovación automática</div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">1 abr 2026</span></div>
+          <div class="cr"><div><div class="cr-label">Método de pago</div><div class="cr-sub">Visa terminada en 4242</div></div><button class="btn btn-ghost" style="font-size:12px;padding:5px 10px">Cambiar</button></div>
+          <div class="cr" style="border-bottom:none"><div><div class="cr-label">Facturación por email</div><div class="cr-sub">Facturas mensuales automáticas</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ch-title">Historial de pagos</div></div>
+          <div class="empty" style="padding:48px 20px">
+            <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><rect x="1.5" y="4" width="13" height="9" rx="1.5"/><path d="M1.5 7.5h13"/></svg></div>
+            <div class="empty-t">Sin pagos registrados</div>
+            <div class="empty-s">El historial de transacciones aparecerá aquí</div>
+          </div>
+        </div>
+      </div>`
+  },
+
+  'archivos-media': {
+    title: 'Archivos / Media',
+    sub: 'Gestiona imágenes, documentos y archivos usados por tus bots.',
+    render: () => `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+          Subir archivo
+        </button>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">Biblioteca de archivos</div></div>
+        <div class="empty" style="padding:64px 20px">
+          <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="8" y1="5" x2="8" y2="11"/></svg></div>
+          <div class="empty-t">Sin archivos subidos</div>
+          <div class="empty-s">Sube imágenes y documentos para que tus bots puedan usarlos</div>
+        </div>
+      </div>`
+  },
+
+  equipo: {
+    title: 'Equipo',
+    sub: 'Gestiona los miembros y permisos de tu espacio de trabajo.',
+    render: () => `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+          Invitar miembro
+        </button>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">Miembros del equipo</div><span class="si-badge" style="font-size:11px">1 miembro</span></div>
+        <table>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="td-m">Juan R.</span></td>
+              <td>juan@empresa.com</td>
+              <td><span class="pill on">Admin</span></td>
+              <td><span class="pill on">Activo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`
+  }
+};
+
+// ─── MODAL CONTENT ───────────────────────────────────────────────────────────
+const MODALS = {
+  dashboard: {
+    title: 'Dashboard', sub: 'Vista rápida del estado general',
+    render: () => `
+      <div class="stats-row" style="grid-template-columns:1fr 1fr;gap:12px">
+        <div class="stat"><div class="stat-top"><div class="stat-label">Mensajes hoy</div></div><div class="stat-value empty">—</div><div class="stat-note">Sin actividad aún</div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-label">Conversaciones activas</div></div><div class="stat-value empty">0</div><div class="stat-note">Ningún bot activo</div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-label">Tasa de respuesta</div></div><div class="stat-value empty">—</div><div class="stat-note">Disponible con datos</div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-label">Escalados a agente</div></div><div class="stat-value empty">0</div><div class="stat-note">Sin escalados</div></div>
+      </div>`
+  },
+  bots: {
+    title: 'Mis Bots', sub: 'Estado rápido de todos tus bots',
+    render: () => `
+      <div class="empty" style="padding:40px 20px">
+        <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.2"/></svg></div>
+        <div class="empty-t">Sin bots configurados</div>
+        <div class="empty-s">Crea tu primer bot para empezar</div>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="closeModal()">Ir a Mis Bots</button>
+      </div>`
+  },
+  conversaciones: {
+    title: 'Conversaciones', sub: 'Últimas conversaciones activas',
+    render: () => `
+      <div class="empty" style="padding:40px 20px">
+        <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><path d="M2 3h12a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 2V4a1 1 0 011-1z"/></svg></div>
+        <div class="empty-t">Sin conversaciones activas</div>
+        <div class="empty-s">Las conversaciones en curso aparecerán aquí</div>
+      </div>`
+  },
+  flujos: {
+    title: 'Flujos', sub: 'Flujos de conversación activos',
+    render: () => `
+      <div class="empty" style="padding:40px 20px">
+        <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><path d="M3 5h10M3 8h6M3 11h4"/><rect x="1.5" y="2" width="13" height="12" rx="1.5"/></svg></div>
+        <div class="empty-t">Sin flujos definidos</div>
+        <div class="empty-s">Crea flujos para automatizar respuestas según la intención del usuario</div>
+      </div>`
+  },
+  archivos: {
+    title: 'Archivos', sub: 'Archivos y media disponibles',
+    render: () => `
+      <div class="empty" style="padding:40px 20px">
+        <div class="empty-ico"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="8" y1="5" x2="8" y2="11"/></svg></div>
+        <div class="empty-t">Sin archivos subidos</div>
+        <div class="empty-s">Sube imágenes y documentos desde la sección Archivos / Media</div>
+      </div>`
+  },
+  analiticas: {
+    title: 'Analíticas', sub: 'Métricas clave de rendimiento',
+    render: () => `
+      <div class="stats-row" style="grid-template-columns:1fr 1fr;gap:12px">
+        <div class="stat"><div class="stat-top"><div class="stat-label">Total mensajes</div></div><div class="stat-value empty">—</div><div class="stat-note">Sin datos</div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-label">Usuarios únicos</div></div><div class="stat-value empty">—</div><div class="stat-note">Sin datos</div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-label">Resolución automática</div></div><div class="stat-value empty">—</div><div class="stat-note">Sin datos</div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-label">Tiempo de respuesta</div></div><div class="stat-value empty">—</div><div class="stat-note">Sin datos</div></div>
+      </div>`
+  },
+  pagos: {
+    title: 'Pagos', sub: 'Resumen de tu suscripción',
+    render: () => `
+      <div class="plan-banner">
+        <div><div class="pb-label">PLAN ACTIVO</div><div><span class="pb-val">Plan Pro</span><span class="pb-date">$49 USD / mes</span></div></div>
+        <button class="pb-manage">Gestionar</button>
+      </div>
+      <div class="cr" style="margin-top:8px"><div><div class="cr-label">Próximo cobro</div><div class="cr-sub">Renovación automática</div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">1 abr 2026</span></div>
+      <div class="cr" style="border-bottom:none"><div><div class="cr-label">Método de pago</div><div class="cr-sub">Visa terminada en 4242</div></div><button class="btn btn-ghost" style="font-size:12px;padding:5px 10px">Cambiar</button></div>`
+  }
+};
+
+// ─── MINI-PAGE RENDER ────────────────────────────────────────────────────────
+function loadMiniPage(key) {
+  const page = MINI_PAGES[key];
+  if (!page) return;
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="ph">
+      <div class="ph-title">${page.title}</div>
+      <div class="ph-sub">${page.sub}</div>
+    </div>
+    ${page.render()}
+  `;
+  main.querySelectorAll(':scope > *').forEach((el, i) => {
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = `fu 0.22s ease both`;
+    el.style.animationDelay = `${i * 0.04}s`;
+  });
+}
+
+// ─── FULL-PAGE RENDER ────────────────────────────────────────────────────────
+function loadFullPage(key) {
+  const existing = document.getElementById('fullpage-overlay');
+  if (existing) existing.remove();
+
+  const page = FULL_PAGES[key];
+  if (!page) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'fullpage-overlay';
+  overlay.id = 'fullpage-overlay';
+  overlay.innerHTML = `
+    <div class="fullpage-inner">
+      <div class="fullpage-back" onclick="closeFullPage()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="10,2 4,8 10,14"/></svg>
+        Volver al resumen
+      </div>
+      <div class="ph">
+        <div class="ph-title">${page.title}</div>
+        <div class="ph-sub">${page.sub}</div>
+      </div>
+      ${page.render()}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function closeFullPage() {
+  const overlay = document.getElementById('fullpage-overlay');
+  if (overlay) overlay.remove();
+  // deactivate sidebar items
+  document.querySelectorAll('.si').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.si').forEach(el => {
+    if (el.textContent.trim().toLowerCase() === 'resumen') el.classList.add('active');
+  });
+}
+
+// ─── MODAL RENDER ────────────────────────────────────────────────────────────
+function openModal(key) {
+  const existing = document.getElementById('modal-overlay');
+  if (existing) existing.remove();
+
+  const modal = MODALS[key];
+  if (!modal) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" id="modal-box">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">${modal.title}</div>
+          <div class="modal-sub">${modal.sub}</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">${modal.render()}</div>
+    </div>
+  `;
+  // close on backdrop click
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+  document.body.appendChild(overlay);
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modal-overlay');
+  if (overlay) overlay.remove();
+  // remove active from topnav
+  document.querySelectorAll('.top-nav-item').forEach(i => i.classList.remove('active'));
+}
+
+// ─── SIDEBAR CLICK ───────────────────────────────────────────────────────────
+function setSide(el) {
+  const label = el.textContent.trim().toLowerCase().replace(/\s+/g,' ');
+  const type = SIDEBAR_ROUTES[label];
+
+  document.querySelectorAll('.si').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  closeModal();
+
+  if (type === 'mini') {
+    const keyMap = {
+      'resumen': 'resumen', 'mis bots': 'mis-bots',
+      'conversaciones': 'conversaciones', 'analíticas': 'analiticas',
+      'configurar bot': 'configurar-bot', 'flujos': 'flujos'
+    };
+    const existing = document.getElementById('fullpage-overlay');
+    if (existing) existing.remove();
+    loadMiniPage(keyMap[label] || 'resumen');
+  } else if (type === 'full') {
+    const keyMap = {
+      'archivos / media': 'archivos-media',
+      'pagos': 'pagos',
+      'equipo': 'equipo'
+    };
+    loadFullPage(keyMap[label]);
+  }
+}
+
+// ─── TOPNAV CLICK ────────────────────────────────────────────────────────────
+function setTopActive(el) {
+  const label = el.textContent.trim().toLowerCase();
+  document.querySelectorAll('.top-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  openModal(label);
+}
+
+// ─── PERIOD BUTTONS ──────────────────────────────────────────────────────────
+function setPeriod(el) {
+  el.closest('.chart-period').querySelectorAll('.period-btn').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── ESC TO CLOSE ────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeFullPage(); }
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+loadMiniPage('resumen');
+</script>
+</body>
+</html>
