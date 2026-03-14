@@ -1268,7 +1268,19 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-loadMiniPage('resumen');
+loadMiniPage('resumen'); // —— API REAL
+async function cargarStats() {
+  try {
+    const res = await fetch('https://api.goodcallai.net/stats/resumen');
+    const d = await res.json();
+    const vals = document.querySelectorAll('.stat-value');
+    if (vals[0]) { vals[0].textContent = d.conversaciones_hoy; vals[0].classList.remove('empty'); }
+    if (vals[1]) { vals[1].textContent = d.conversaciones_total; vals[1].classList.remove('empty'); }
+    if (vals[2]) { vals[2].textContent = d.tasa_conversion + '%'; vals[2].classList.remove('empty'); }
+    if (vals[3]) { vals[3].textContent = d.citas_hoy; vals[3].classList.remove('empty'); }
+  } catch(e) { console.error('API error:', e); }
+}
+cargarStats();
 </script>
 </body>
 </html>
