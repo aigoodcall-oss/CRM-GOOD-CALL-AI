@@ -1270,14 +1270,31 @@ document.addEventListener('keydown', e => {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 loadMiniPage('resumen'); // —— API REAL
 async function cargarStats() {
+  const API = 'https://api.goodcallai.net';
   try {
-    const res = await fetch('https://api.goodcallai.net/stats/resumen');
-    const d = await res.json();
+    // Resumen
+    const r = await fetch(`${API}/stats/resumen`);
+    const d = await r.json();
     const vals = document.querySelectorAll('.stat-value');
     if (vals[0]) { vals[0].textContent = d.conversaciones_hoy; vals[0].classList.remove('empty'); }
     if (vals[1]) { vals[1].textContent = d.conversaciones_total; vals[1].classList.remove('empty'); }
     if (vals[2]) { vals[2].textContent = d.tasa_conversion + '%'; vals[2].classList.remove('empty'); }
     if (vals[3]) { vals[3].textContent = d.citas_hoy; vals[3].classList.remove('empty'); }
+
+    // Ultimas citas
+    const r2 = await fetch(`${API}/stats/ultimas-citas`);
+    const citas = await r2.json();
+    const tabla = document.querySelector('.recent-list, .citas-list, tbody');
+    if (tabla && citas.length > 0) {
+      tabla.innerHTML = citas.map(c => `
+        <tr>
+          <td>${c.nombre}</td>
+          <td>${c.servicio}</td>
+          <td>${c.fecha} ${c.hora}</td>
+          <td><span class="badge">${c.estado}</span></td>
+        </tr>
+      `).join('');
+    }
   } catch(e) { console.error('API error:', e); }
 }
 cargarStats();
